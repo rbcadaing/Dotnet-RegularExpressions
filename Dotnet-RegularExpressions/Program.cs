@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Dotnet_RegularExpressions
 {
@@ -6,7 +10,169 @@ namespace Dotnet_RegularExpressions
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            //PatternMaching();
+            //StringSplitting();
+            GroupingAndSubstitution();
+        }
+
+        /// <summary>
+        /// <quantifier>
+        ///     *  : Matches the previous element zero or more times.
+        ///     +  : Matches the previous element one or more times.
+        ///     ?  : Matches the previous element zero or one time.
+        /// </quantifier>
+        /// </summary>
+        private static void PatternMaching()
+        {
+
+            var patterns = new List<string> { "a*b", "a+b", "a?b" };
+            var inputs = new List<string> { "a", "b", "ab", "aab", "abb" };
+
+            patterns.ForEach(pattern =>
+            {
+                Console.WriteLine("Regular expression: {0}", pattern);
+                var regex = new Regex(pattern);
+                inputs.ForEach(input =>
+                {
+                    Console.WriteLine("\tInput pattern: {0}", input);
+                    var results = regex.Matches(input);
+                    if (results.Count <= 0)
+                        Console.WriteLine("\t\tNo Matches Found");
+                    foreach (Match result in results)
+                        Console.WriteLine("\t\tMatch found at index {0}. Length: {1}", result.Index, result.Length);
+                });
+
+            });
+
+            Console.ReadKey();
+        }
+
+        /// <summary>
+        /// Example Character classes
+        ///  \w : Matches any wor character
+        ///  \W : Matches any non-word character
+        ///  \d : Matches any decimal digit
+        ///  
+        /// Alternation Construct
+        ///  | : Matches any one element separated by vertical bar character (|)
+        ///  (?(expression)yes|no) : Matches yes if the regex designated by expression matches.
+        ///                          Otherwise, matches the optional no part. the regex engine
+        ///                          does not advance the input stream after it evaluates expressions
+        ///                          
+        /// Anchoring : preventing evaluating morethan the characters anchored
+        /// anchor syntax ^ and $
+        /// 
+        /// </summary>
+        private static void StringSplitting()
+        {
+            var patterns = new List<string>
+            {
+                @"^\d\d\d-\d\d\d-\d\d\d\d$"
+            };
+
+            var inputs = new List<string>
+            {
+                "5555555555",
+                "(555)-555-5555",
+                "555-555-5555",
+                "555-555-555a",
+                "5555-555-5555",
+                "555-5555555",
+                "000-000-0000",
+                "a",
+                "5.55.555.5555",
+                "...-...-...."
+            };
+
+            patterns.ForEach(pattern =>
+            {
+                Console.WriteLine("Regular expression: {0}", pattern);
+                var regex = new Regex(pattern);
+                inputs.ForEach(input =>
+                {
+                    Console.WriteLine("\tInput pattern: {0}", input);
+                    var isMatch = regex.IsMatch(input);
+                    Console.WriteLine("\t\t{0}", isMatch ? "Accepted" : "Rejected");
+                    if (!isMatch)
+                        return;
+                    var splits = Regex.Split(input, @"-\d\d\d-").ToList();
+                    Console.WriteLine("\t\t\tArea code: {0}", splits[0]);
+                    Console.WriteLine("\t\t\tLast 4 digits: {0}", splits[1]);
+                });
+            });
+            Console.ReadKey();
+        }
+
+        /// <summary>
+        /// Example Grouping Conctruct
+        /// (subexpression) Captures the matched subexpression and assigns it a one based ordinal number  "(\d)x(\d)F" matches "0x1F"
+        /// (?<name>subexpression) Captures the matched subexpression into a named group "(?<One>\d)x(?<two>\d)F" matches "0x1F"
+        /// (?:subexpression) Defines a non-capturing group. "(?:\d)x(?:\d)F" matches "0x1F"
+        /// 
+        /// Exmaple Backreference Constructs
+        ///  \number : Backreference matches the value of numbered subexpression "(\d)x\1F" matches "0x0F"
+        ///  \k<name> : Named backreference matches the value of named expression. "(?<one>\d)x\k<one>F" matches "0x0F"
+        /// </summary>
+        private static void GroupingAndSubstitution()
+        {
+            var patterns = new List<string>
+            {
+                @"([A-Za-z]+).*\$(\d+.\d+)"
+            };
+
+            var inputs = new List<string>
+            {
+                @"
+                    |----------------------|
+                    | Receipt from         |
+                    | Alexandru's shop     |
+                    |                      |
+                    | Thanks for shopping! |
+                    |---------|------------|
+                    |  Item   | Price $USD |
+                    |---------|------------|
+                    | Shoes   |   $47.99   |
+                    | Cabbage |    $2.99   |
+                    | Carrots |    $1.23   |
+                    | Chicken |    $9.99   |
+                    | Beef    |   $12.47   |
+                    | Shirt   |    $5.97   |
+                    | Salt    |    $2.99   |
+                    |---------|------------|"
+            };
+            patterns.ForEach(pattern =>
+            {
+                Console.WriteLine("Regular expression: {0}", pattern);
+                var regex = new Regex(pattern);
+                inputs.ForEach(input =>
+                {
+                    Console.WriteLine("\tInput pattern: {0}", input);
+                    var matches = regex.Matches(input);
+                    if (matches.Count <= 0)
+                        Console.WriteLine("\t\tNo matches found.");
+
+                    foreach (Match match in matches)
+                    {
+                        Console.WriteLine("\t\tMatch at index {0} with length {1}", match.Index, match.Length);
+                        foreach (Group group in match.Groups)
+                        {
+                            Console.WriteLine("\t\t\tGroup at index {0} has value {1}", group.Index, group.Value);
+                        }
+                    }
+                    Console.WriteLine("Simple replacement results: {0}",
+                        Regex.Replace(input, @"(Chicken)(.*) \$(9.99)", @"$1$2 $$0.00"));
+
+                    var results = Regex.Replace(input, pattern, (match) =>
+                    {
+                        if (match.Groups[1].Value == "Chicken")
+                            return match.Value.Replace(match.Groups[2].Value, "0.00");
+                        return match.Value;
+                    });
+                    Console.WriteLine("Advance replacement results: {0}", results);
+
+                });
+            });
+            Console.ReadKey();
         }
     }
 }
