@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Dotnet-RegularExpressions/obj/Debug/netcoreapp3.1
+/Dotnet-RegularExpressions/obj
+/.vs/Dotnet-RegularExpressions/v16
