@@ -12,7 +12,9 @@ namespace Dotnet_RegularExpressions
         {
             //PatternMaching();
             //StringSplitting();
-            GroupingAndSubstitution();
+            //GroupingAndSubstitution();
+            //AnchorsAndBoundaries();
+            RegularExpressionOptions();
         }
 
         /// <summary>
@@ -170,6 +172,121 @@ namespace Dotnet_RegularExpressions
                     });
                     Console.WriteLine("Advance replacement results: {0}", results);
 
+                });
+            });
+            Console.ReadKey();
+        }
+        /// <summary>
+        /// Example Anchors
+        /// ^ : By default, the match must start at the beginning of the string in multiline mode it must start at the beginning of the line
+        /// $ : By default the match must occur at the end of the string or before \n at the 
+        ///      end of the string: in multiline mode it must occur before the end of the line or before 
+        ///      \n at the end of the line
+        ///      
+        /// Example Boundaries
+        /// \b : The match must occur on a boundary between a \w (alphanumeric) and a \W
+        ///      (nonalphanumeric) character
+        /// \B : the match mus not occur on a \b boundary
+        /// </summary>
+        private static void AnchorsAndBoundaries()
+        {
+            var patterns = new List<string>
+            {
+                @"\b",
+                @"\B",
+                @"^hi",
+                @"hi$"
+            };
+
+            var inputs = new List<string>
+            {
+                "a b",
+                "a",
+                " ",
+                "",
+                "hi",
+                " hi",
+                " hi",
+                "him",
+                " him",
+                "him "
+            };
+
+            patterns.ForEach(pattern =>
+            {
+                Console.WriteLine("Regular expression: {0}", pattern);
+                var regex = new Regex(pattern);
+                inputs.ForEach(input =>
+                {
+                    Console.WriteLine("\tInput pattern: {0}", input);
+                    var results = regex.Matches(input);
+                    if (results.Count <= 0)
+                        Console.WriteLine("\t\tNo Matches found");
+                    foreach (Match result in results)
+                        Console.WriteLine("\t\tMatch Found at index {0}. Length: {1}.", result.Index, result.Length);
+                });
+            });
+
+            Console.ReadKey();
+        }
+        /// <summary>
+        /// Exmaple Regex Options
+        /// i : use case-incensitive matching "H(?i)e(?-i)y" matches "Hey", " "HEy" mismatches "hey", "HEY"
+        /// m : use multiline mode. ^ and $ match the beginning and end of a line, instead of the beginning and end of a string
+        ///     "(?m)^hey$" matches "hey\nhey","hey" mismatches "hey\n\ hey","hey "
+        /// x : ignore unescaped white space in the regular expression pattern
+        ///     "(?x) \r\n h e y" matches "hey"," hey " mismatches "Hey", "HEy"
+        ///     
+        /// Example of Miscellaneous Constructs
+        /// (?imnsx-imnsx) : sets or disable options such as case incensitivity in the middle of a pattern
+        ///                   "H(?i)e(?-i)y" matches "Hey","HEy" mistchaes  mismatches
+        ///                   "hey, "HEY"
+        /// (?# Comment)   : Inline comment . the comment ens at the first clossing parenthesis
+        ///                  "He(?# this is an inline comment....)y" maches "Hey" mismatches "hey, "HEY","HEy"
+        ///  # Comment     : X-mode comment. The comment starts at an unescaped # and continues to the end of the line.
+        ///                  "(?x)Hey#this is a comment" matches "Hey" mismatches "hey","HEY","HEy"
+        /// </summary>
+        private static void RegularExpressionOptions()
+        {
+            var patterns = new List<string>
+            {
+                "(?x)Hey#this is a comment",
+                "He(?# this is an inline comment....)y",
+                "H(?i)e(?-i)y",
+                @"(?m)^hey$",
+                "(he)y",
+                "(?n)(he)(?-n)y",
+                "(?x) \r\n h e y"
+            };
+
+            var inputs = new List<string>
+            {
+                "hey\nhey",
+                " hey\nhey",
+                " hey\n hey",
+                "Hey",
+                "hey",
+                "HEy",
+                "HEY",
+                " hey",
+                "hey ",
+                " hey "
+            };
+            patterns.ForEach(pattern =>
+            {
+                Console.WriteLine("Regular expression: \"{0}\"", pattern);
+                var regex = new Regex(pattern);
+                inputs.ForEach(input =>
+                {
+                    Console.WriteLine("\tInput pattern: \"{0}\"", input);
+                    var results = regex.Matches(input);
+                    if (results.Count <= 0) Console.WriteLine("\t\tNo Matches Found");
+                    foreach (Match match in results)
+                    {
+                        Console.WriteLine("\t\tMatch Found at index {0}. Length: {1}.", match.Index, match.Length);
+                        foreach (Group group in match.Groups)
+                            Console.WriteLine("\t\t\tGroup at index {0} has value {1}", group.Index, group.Value);
+                    }
                 });
             });
             Console.ReadKey();
